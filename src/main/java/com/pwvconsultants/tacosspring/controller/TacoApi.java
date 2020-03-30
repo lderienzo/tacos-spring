@@ -25,14 +25,13 @@ public class TacoApi {
     @Autowired
     TacoService tacoService;
 
-    // TODO - sad path scenarios in all of these methods?
     @GetMapping(value = "/tacos")
     public String getTacos() {
         return tacoService.getTacos();
     }
 
     @GetMapping(value = "/taco/{name}")
-    public Taco getTaco(@PathVariable String name) {
+    public String getTaco(@PathVariable String name) {
         return tacoService.getTaco(name);
     }
 
