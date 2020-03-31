@@ -9,9 +9,12 @@ import com.pwvconsultants.tacosspring.model.Taco;
 @Component
 public class TacoService {
 
-    private TacoFileDataSourceService tacoFileDataSourceService = new TacoFileDataSourceService("src/main/resources/db.json");
+    public static final String tacosJsonPath = "src/main/resources/db.json";
+    private TacoFileDataSourceService tacoFileDataSourceService = new TacoFileDataSourceService(tacosJsonPath);
+
 
     public String updateTaco(Taco taco) {
+        tacoFileDataSourceService.updateTaco(taco);
         return "done";
     }
 

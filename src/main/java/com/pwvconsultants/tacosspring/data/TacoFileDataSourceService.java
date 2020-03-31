@@ -19,14 +19,22 @@ public final class TacoFileDataSourceService {
 
     private String filePath;
     private String tacosJson;
-    private Taco[] tacoArray;
+    private Taco[] tacos;
     private ObjectMapper mapper;
 
     public TacoFileDataSourceService(String filePath) {
         this.filePath = filePath;
-        this.tacosJson = readFileContents();
         mapper = new ObjectMapper();
-        this.tacoArray = readJsonIntoTacoArray(mapper);
+        this.tacos = readJsonIntoTacoArray(mapper);
+    }
+
+    private Taco[] readJsonIntoTacoArray(ObjectMapper mapper) {
+        tacosJson = readFileContents();
+        try {
+            return mapper.readValue(tacosJson, Taco[].class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String readFileContents() {
@@ -42,28 +50,19 @@ public final class TacoFileDataSourceService {
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines(Paths.get(absoluteFilePath), StandardCharsets.UTF_8)) {
             stream.forEach(s -> contentBuilder.append(s));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return contentBuilder.toString();
     }
 
-    public Taco[] readJsonIntoTacoArray(ObjectMapper mapper) {
-        try {
-            return mapper.readValue(tacosJson, Taco[].class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public String getTacosJson() {
+        tacosJson = readFileContents();
         return tacosJson;
     }
 
     public String getTaco(String name) {
-        List<Taco> foundTaco = Arrays.stream(tacoArray)
-                .filter(taco -> taco.getName().equals(name)).collect(Collectors.toList());
+        List<Taco> foundTaco = Arrays.stream(tacos).filter(taco -> taco.getName().equals(name)).collect(Collectors.toList());
         if (foundTaco.size() == 1)
             return writeTacoObjectToJsonString(foundTaco.get(0));
         else
@@ -74,6 +73,31 @@ public final class TacoFileDataSourceService {
         try {
             return mapper.writeValueAsString(foundTaco);
         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateTaco(Taco updatedTaco) {
+        iterateOverTacosAndUpdate(updatedTaco);
+        writeTacosToFile();
+    }
+
+    private void iterateOverTacosAndUpdate(Taco updatedTaco) {
+        for (int i = 0; i < tacos.length; i++) {
+            if (currentTacoIsToBeUpdated(updatedTaco, tacos[i])) {
+                tacos[i] = updatedTaco;
+            }
+        }
+    }
+
+    private boolean currentTacoIsToBeUpdated(Taco currentTaco, Taco updatedTaco) {
+        return currentTaco.getName().equals(updatedTaco.getName());
+    }
+
+    private void writeTacosToFile() {
+        try {
+            mapper.writeValue(new File(filePath), tacos);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

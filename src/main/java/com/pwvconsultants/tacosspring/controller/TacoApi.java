@@ -35,7 +35,7 @@ public class TacoApi {
         return tacoService.getTaco(name);
     }
 
-    @PutMapping(value = "/taco")
+    @PutMapping(value = "/taco/{name}")
     public String updateTaco(@RequestBody Taco changedTaco) {
         String result = tacoService.updateTaco(changedTaco);
         return result;
