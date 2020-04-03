@@ -12,21 +12,19 @@ public class TacoService {
     public static final String tacosJsonPath = "src/main/resources/db.json";
     private TacoFileDataSourceService tacoFileDataSourceService = new TacoFileDataSourceService(tacosJsonPath);
 
-
-    public String updateTaco(Taco taco) {
-        tacoFileDataSourceService.updateTaco(taco);
-        return "done";
-    }
-
-    public String removeTaco(String name) {
-        return "done";
+    public String getTacos() {
+        return tacoFileDataSourceService.getTacosJsonString();
     }
 
     public String getTaco(String name) {
         return tacoFileDataSourceService.getTaco(name);
     }
 
-    public String getTacos() {
-        return tacoFileDataSourceService.getTacosJson();
+    public String updateTaco(Taco taco) {
+        return tacoFileDataSourceService.updateTaco(taco);
+    }
+
+    public String removeTaco(String name) {
+        return tacoFileDataSourceService.removeTaco(name);
     }
 }
