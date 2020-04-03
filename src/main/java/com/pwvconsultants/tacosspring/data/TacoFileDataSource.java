@@ -17,15 +17,16 @@ import com.pwvconsultants.tacosspring.model.Taco;
 import com.pwvconsultants.tacosspring.model.Tacos;
 
 
-public final class TacoFileDataSourceService {
+public final class TacoFileDataSource {
 
-    public static final String RETURN_DONE = "done";
+    public static final String DONE = "done";
+    public static final String NOT_FOUND = "not found";
     private String filePath;
     private String tacosJsonString;
     private Taco[] tacos;
     private ObjectMapper mapper;
 
-    public TacoFileDataSourceService(String filePath) {
+    public TacoFileDataSource(String filePath) {
         this.filePath = filePath;
         mapper = new ObjectMapper();
         this.tacos = readTacoDataFromFile(mapper);
@@ -41,12 +42,8 @@ public final class TacoFileDataSourceService {
     }
 
     private String readFileContents() {
-        String absoluteFilePath = getAbsoluteFilePath();
+        String absoluteFilePath = new File(filePath).getAbsolutePath();;
         return getTacosJsonStringFromAbsolutePath(absoluteFilePath);
-    }
-
-    private String getAbsoluteFilePath() {
-        return new File(filePath).getAbsolutePath();
     }
 
     private String getTacosJsonStringFromAbsolutePath(String absoluteFilePath) {
@@ -61,8 +58,8 @@ public final class TacoFileDataSourceService {
 
     private String parseOutTacosJsonArray(StringBuilder contentBuilder) {
         int beginArrayIndex = contentBuilder.indexOf("[");
-        int endArrayIndex = contentBuilder.indexOf("]");
-        return contentBuilder.subSequence(beginArrayIndex, endArrayIndex + 1).toString();
+        int endArrayIndex = contentBuilder.indexOf("]") + 1;
+        return contentBuilder.subSequence(beginArrayIndex, endArrayIndex).toString();
     }
 
     public String getTacosJsonString() {
@@ -76,7 +73,7 @@ public final class TacoFileDataSourceService {
         if (foundTaco.size() == 1)
             return writeTacoObjectToJsonString(foundTaco.get(0));
         else
-            return "not found";
+            return NOT_FOUND;
     }
 
     private String writeTacoObjectToJsonString(Taco foundTaco) {
@@ -89,21 +86,31 @@ public final class TacoFileDataSourceService {
 
     public String updateTaco(Taco tacoData) {
         tacos = readTacoDataFromFile(mapper);
-        findTacoAndUpdateIt(tacoData, tacos);
+        int indexOfTacoToUpdate = findIndexOfTaco(tacoData.getName(), tacos);
+        tacos = updateTacoArray(tacoData, indexOfTacoToUpdate, tacos);
         writeTacosToFile(tacos);
-        return RETURN_DONE;
+        return DONE;
     }
 
-    private void findTacoAndUpdateIt(Taco tacoData, Taco[] tacos) {
-        for (int i = 0; i < tacos.length; i++) {
-            if (tacoIsFound(tacoData.getName(), tacos[i].getName())) {
-                tacos[i] = tacoData;
-            }
-        }
+    private int findIndexOfTaco(String name, Taco[] tacos) {
+        return IntStream.range(0, tacos.length)
+                .filter(i -> tacoIsFound(name, tacos[i].getName()))
+                .findFirst().orElse(-1);
     }
 
     private boolean tacoIsFound(String nameOfCurrentTaco, String nameOfTacoToFind) {
         return nameOfCurrentTaco.equals(nameOfTacoToFind);
+    }
+
+    private Taco[] updateTacoArray(Taco tacoData, int index, Taco[] tacos) {
+        if (indexIsInvalid(index))
+            return tacos;
+        tacos[index] = tacoData;
+        return tacos;
+    }
+
+    private boolean indexIsInvalid(int index) {
+        return index == -1;
     }
 
     private void writeTacosToFile(Taco[] tacosArray) {
@@ -117,27 +124,21 @@ public final class TacoFileDataSourceService {
 
     public String removeTaco(String name) {
         tacos = readTacoDataFromFile(mapper);
-        int indexOfTacoToRemove = findIndexOfTacoToRemove(name, tacos);
+        int indexOfTacoToRemove = findIndexOfTaco(name, tacos);
         tacos = removeTacoFromArray(indexOfTacoToRemove, tacos);
         writeTacosToFile(tacos);
-        return RETURN_DONE;
-    }
-
-    private int findIndexOfTacoToRemove(String name, Taco[] tacos) {
-        return IntStream.range(0, tacos.length)
-                .filter(i -> tacoIsFound(name, tacos[i].getName()))
-                .findFirst().orElse(-1);
+        return DONE;
     }
 
     public Taco[] removeTacoFromArray(int index, Taco[] tacos) {
-        if (returnArrayIfTacosEmptyOrIndexOutOfBounds(index, tacos))
+        if (tacosEmptyOrIndexOutOfBounds(index, tacos))
             return tacos;
         List<Taco> tacoList = convertArrayToList(tacos);
         tacoList.remove(index);
         return convertListBackToArray(tacoList);
     }
 
-    private boolean returnArrayIfTacosEmptyOrIndexOutOfBounds(int index, Taco[] tacos) {
+    private boolean tacosEmptyOrIndexOutOfBounds(int index, Taco[] tacos) {
         return tacos == null || tacos.length == 0 || index < 0 || index >= tacos.length;
     }
 

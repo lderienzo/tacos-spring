@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,12 +26,12 @@ public class TacoApi {
     @Autowired
     TacoService tacoService;
 
-    @GetMapping(value = "/tacos")
+    @GetMapping(value = "/tacos", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getTacos() {
         return tacoService.getTacos();
     }
 
-    @GetMapping(value = "/taco/{name}")
+    @GetMapping(value = "/taco/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getTaco(@PathVariable String name) {
         return tacoService.getTaco(name);
     }
