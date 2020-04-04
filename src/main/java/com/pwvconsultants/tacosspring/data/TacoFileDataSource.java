@@ -2,9 +2,6 @@ package com.pwvconsultants.tacosspring.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pwvconsultants.tacosspring.model.Taco;
 import com.pwvconsultants.tacosspring.model.Tacos;
+import com.pwvconsultants.tacosspring.utils.FileReader;
 
 
 public final class TacoFileDataSource {
@@ -26,6 +24,7 @@ public final class TacoFileDataSource {
     private Taco[] tacos;
     private ObjectMapper mapper;
 
+
     public TacoFileDataSource(String filePath) {
         this.filePath = filePath;
         mapper = new ObjectMapper();
@@ -33,7 +32,7 @@ public final class TacoFileDataSource {
     }
 
     private Taco[] readTacoDataFromFile(ObjectMapper mapper) {
-        tacosJsonString = readFileContents();
+        tacosJsonString = getTacosJsonStringFromFile();
         try {
             return mapper.readValue(tacosJsonString, Taco[].class);
         } catch (JsonProcessingException e) {
@@ -41,19 +40,9 @@ public final class TacoFileDataSource {
         }
     }
 
-    private String readFileContents() {
-        String absoluteFilePath = new File(filePath).getAbsolutePath();;
-        return getTacosJsonStringFromAbsolutePath(absoluteFilePath);
-    }
-
-    private String getTacosJsonStringFromAbsolutePath(String absoluteFilePath) {
-        StringBuilder contentBuilder = new StringBuilder();
-        try (Stream<String> stream = Files.lines(Paths.get(absoluteFilePath), StandardCharsets.UTF_8)) {
-            stream.forEach(s -> contentBuilder.append(s));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return parseOutTacosJsonArray(contentBuilder);
+    private String getTacosJsonStringFromFile() {
+        StringBuilder fileContents = FileReader.readFileContents(filePath);
+        return parseOutTacosJsonArray(fileContents);
     }
 
     private String parseOutTacosJsonArray(StringBuilder contentBuilder) {
@@ -63,7 +52,7 @@ public final class TacoFileDataSource {
     }
 
     public String getTacosJsonString() {
-        tacosJsonString = readFileContents();
+        tacosJsonString = getTacosJsonStringFromFile();
         return tacosJsonString;
     }
 
@@ -88,7 +77,7 @@ public final class TacoFileDataSource {
         tacos = readTacoDataFromFile(mapper);
         int indexOfTacoToUpdate = findIndexOfTaco(tacoData.getName(), tacos);
         tacos = updateTacoArray(tacoData, indexOfTacoToUpdate, tacos);
-        writeTacosToFile(tacos);
+        writeTacoDataToFile(tacos);
         return DONE;
     }
 
@@ -113,7 +102,7 @@ public final class TacoFileDataSource {
         return index == -1;
     }
 
-    private void writeTacosToFile(Taco[] tacosArray) {
+    private void writeTacoDataToFile(Taco[] tacosArray) {
         Tacos tacos = new Tacos(tacosArray);
         try {
             mapper.writeValue(new File(filePath), tacos);
@@ -126,7 +115,7 @@ public final class TacoFileDataSource {
         tacos = readTacoDataFromFile(mapper);
         int indexOfTacoToRemove = findIndexOfTaco(name, tacos);
         tacos = removeTacoFromArray(indexOfTacoToRemove, tacos);
-        writeTacosToFile(tacos);
+        writeTacoDataToFile(tacos);
         return DONE;
     }
 
