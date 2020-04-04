@@ -17,10 +17,12 @@ public class RequiredLetterWordProcessorTest {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
     private static final String TXT_SAMPLE_FILE_PATH = "src/test/resources/textSample.txt";
     private static final String TXT_SAMPLE = FileReader.readFileContents(TXT_SAMPLE_FILE_PATH).toString();
+    private RequiredLetterWordProcessor wordProcessor = new RequiredLetterWordProcessor();
 
     @Test
     public void testRequiredLetterWordProcessor() {
-        RequiredLetterWordProcessor.processText(TXT_SAMPLE);
+        String[] validWords = wordProcessor.processText(TXT_SAMPLE);
+        Arrays.stream(validWords).forEach(System.out::println);
     }
 
     @Test
