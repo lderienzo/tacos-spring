@@ -26,8 +26,6 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.pwvconsultants.tacosspring.TacosSpringApplication;
-import com.pwvconsultants.tacosspring.model.Taco;
-import com.pwvconsultants.tacosspring.model.Tacos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -61,7 +59,7 @@ public class RequiredLetterWordProcessor {
 
     private List<String> searchWordListForValidWords(List<String> words) {
         return words.stream()
-                .filter(w -> wordIsValid(w))
+                .filter(this::wordIsValid)
                 .collect(Collectors.toList());
     }
 
@@ -77,7 +75,7 @@ public class RequiredLetterWordProcessor {
     }
 
     private boolean characterCollectionIsValid(Collection<Character> charCollection) {
-        charCollection.removeIf(c -> REQUIRED_LETTER_SET.contains(c));
+        charCollection.removeIf(REQUIRED_LETTER_SET::contains);
         String word = convertCharCollectionBackToWordString(charCollection);
         return wordDoesNotConsistOfOnlyRequiredLetters(word) &&
                 (onlyOneCharacterRemaining(word) || allRemainingCharactersAreTheSame(word));
@@ -100,7 +98,7 @@ public class RequiredLetterWordProcessor {
     }
 
     private List<String> normalizeValidWordsToLowerCase(List<String> validWords) {
-        return validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
+        return validWords.stream().map(String::toLowerCase).collect(Collectors.toList());
     }
 
     private String[] getRemainingWordArray(List<String> words) {
@@ -109,12 +107,11 @@ public class RequiredLetterWordProcessor {
     }
 
     private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
-        Set<String> validWordSet = new HashSet(validWordList);
-        return validWordSet;
+        return new HashSet(validWordList);
     }
 
     private String[] convertSetToSortedArray(Set<String> validWordSet) {
-        String[] validWordArray = validWordSet.stream().toArray(String[]::new);
+        String[] validWordArray = validWordSet.toArray(new String[0]);
         Arrays.sort(validWordArray, Comparator.comparing(String::length));
         return validWordArray;
     }

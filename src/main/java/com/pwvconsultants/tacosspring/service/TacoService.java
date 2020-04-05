@@ -10,7 +10,7 @@ import com.pwvconsultants.tacosspring.model.Taco;
 public class TacoService {
 
     public static final String tacosJsonPath = "src/main/resources/db.json";
-    private TacoFileDataSource tacoFileDataSource = new TacoFileDataSource(tacosJsonPath);
+    private final TacoFileDataSource tacoFileDataSource = new TacoFileDataSource(tacosJsonPath);
 
     public String getTacos() {
         return tacoFileDataSource.getTacosJsonString();

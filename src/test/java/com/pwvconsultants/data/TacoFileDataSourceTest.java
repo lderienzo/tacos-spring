@@ -22,7 +22,7 @@ public class TacoFileDataSourceTest {
     private static final String TACOS_TEST_JSON_FILE_PATH = "src/test/resources/db.json";
     private static final String EXPECTED_UNCHANGED_TACO_DATA = "[{\"name\":\"chorizo taco\",\"tortilla\":\"corn\",\"toppings\":\"chorizo\",\"vegetarian\":false,\"soft\":true},{\"name\":\"chicken taco\",\"tortilla\":\"flour\",\"toppings\":\"chicken\",\"vegetarian\":false,\"soft\":true},{\"name\":\"al pastor taco\",\"tortilla\":\"corn\",\"toppings\":\"pork\",\"vegetarian\":false,\"soft\":true},{\"name\":\"veggie taco\",\"tortilla\":\"spinach\",\"toppings\":\"veggies\",\"vegetarian\":true,\"soft\":true}]";
 
-    private TacoFileDataSource tacoFileDataSource = new TacoFileDataSource(TACOS_TEST_JSON_FILE_PATH);
+    private final TacoFileDataSource tacoFileDataSource = new TacoFileDataSource(TACOS_TEST_JSON_FILE_PATH);
 
     @AfterEach
     public void resetTestJsonWithOriginal() {
@@ -57,8 +57,7 @@ public class TacoFileDataSourceTest {
         // given / when
         String actualTacoJson = tacoFileDataSource.getTaco("Bogus taco");
         // then
-        String expectedTacoJson = NOT_FOUND;
-        assertThat(actualTacoJson).isEqualTo(expectedTacoJson);
+        assertThat(actualTacoJson).isEqualTo(NOT_FOUND);
     }
 
     @Test

@@ -21,10 +21,10 @@ public final class TacoFileDataSource {
 
     public static final String DONE = "done";
     public static final String NOT_FOUND = "not found";
-    private String filePath;
+    private final String filePath;
     private String tacosJsonString;
     private Taco[] tacos;
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
     public TacoFileDataSource(String filePath) {
         this.filePath = filePath;
@@ -42,14 +42,14 @@ public final class TacoFileDataSource {
     }
 
     private String readFileContents() {
-        String absoluteFilePath = new File(filePath).getAbsolutePath();;
+        String absoluteFilePath = new File(filePath).getAbsolutePath();
         return getTacosJsonStringFromAbsolutePath(absoluteFilePath);
     }
 
     private String getTacosJsonStringFromAbsolutePath(String absoluteFilePath) {
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines(Paths.get(absoluteFilePath), StandardCharsets.UTF_8)) {
-            stream.forEach(s -> contentBuilder.append(s));
+            stream.forEach(contentBuilder::append);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -139,7 +139,7 @@ public final class TacoFileDataSource {
     }
 
     private boolean tacosEmptyOrIndexOutOfBounds(int index, Taco[] tacos) {
-        return tacos == null || tacos.length == 0 || index < 0 || index >= tacos.length;
+        return tacos == null || index < 0 || index >= tacos.length;
     }
 
     private List<Taco> convertArrayToList(Taco[] tacos) {
@@ -147,7 +147,7 @@ public final class TacoFileDataSource {
     }
 
     private Taco[] convertListBackToArray(List<Taco> tacoList) {
-        return tacoList.stream().toArray(n -> new Taco[n]);
+        return tacoList.toArray(new Taco[0]);
     }
 }
 

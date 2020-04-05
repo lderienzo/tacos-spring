@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 public final class FileReader {
 
     public static StringBuilder readFileContents(String filePath) {
-        String absoluteFilePath = new File(filePath).getAbsolutePath();;
+        String absoluteFilePath = new File(filePath).getAbsolutePath();
         return readFileContentsUsingAbsolutePath(absoluteFilePath);
     }
 

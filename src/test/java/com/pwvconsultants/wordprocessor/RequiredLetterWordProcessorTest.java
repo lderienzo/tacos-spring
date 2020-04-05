@@ -2,7 +2,6 @@ package com.pwvconsultants.wordprocessor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,7 @@ public class RequiredLetterWordProcessorTest {
             "and", "now", "end", "the", "foes", "fair", "take", "love", "here", "life", "miss", "pair", "rage", "scene",
             "these", "shall", "their", "fatal", "alike", "stage", "attend", "lovers", "strife", "strive", "verona",
             "piteous", "ancient", "unclean", "patient", "fearful", "continuance"};
-    private RequiredLetterWordProcessor wordProcessor = new RequiredLetterWordProcessor();
+    private final RequiredLetterWordProcessor wordProcessor = new RequiredLetterWordProcessor();
 
     @Test
     public void whenValidTextBlockPassedThenDataProcessedCorrectlyAndExpectedValuesReturned() {
@@ -28,15 +27,8 @@ public class RequiredLetterWordProcessorTest {
                 wordProcessor.processText(TXT_SAMPLE);
         // then
         assertThat(processingResult.getRemainingWords()).containsExactly(EXPECTED_RETURN_WORD_ARRAY);
-Arrays.stream(processingResult.getRemainingWords()).forEach(System.out::println);
-
         assertThat(processingResult.getMostCommonWord().getWord()).isEqualTo(EXPECTED_MOST_COMMON_WORD);
-System.out.print("Most Common Word: ");
-System.out.println(processingResult.getMostCommonWord().getWord());
-
         assertThat(processingResult.getMostCommonWord().getNumberOfUses()).isEqualTo(EXPECTED_NUMBER_OF_USES);
-System.out.print("Number of Uses: ");
-System.out.println(processingResult.getMostCommonWord().getNumberOfUses());
     }
 
     @Test
