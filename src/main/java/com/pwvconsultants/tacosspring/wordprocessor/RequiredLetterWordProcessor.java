@@ -27,9 +27,6 @@ public class RequiredLetterWordProcessor {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
     private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(\\-\\w+'\\w)?");
 
-    // TODO: The most common word and number of uses as an object.
-    // e.g.   {word:”word”,numberOfUses:2}.
-
     public ProcessingResult processText(String textBlock) {
         List<String> words = extractWordListFromTextBlock(textBlock);
         List<String> validWords = searchWordListForValidWords(words);
@@ -38,19 +35,30 @@ public class RequiredLetterWordProcessor {
         Set<String> validWordSet = deDupeListByConvertingToSet(normalizedValidWords);
         String[] sortedArray = convertSetToSortedArray(validWordSet);
 
-        Map.Entry<String, Long> entry = wordFrequencyMap.entrySet().iterator().next();
-        ProcessingResult processingResult =
-            new ProcessingResult(
-                new MostCommonWord(entry.getKey(), entry.getValue()), sortedArray);
+        ProcessingResult processingResult;
+        if (wordFrequencyMap.size() > 0) {
+            Map.Entry<String, Long> entry = wordFrequencyMap.entrySet().iterator().next();
+            processingResult = new ProcessingResult(new MostCommonWord(entry.getKey(), entry.getValue()), sortedArray);
+        }
+        else
+            processingResult = new ProcessingResult(new MostCommonWord("", 0), sortedArray);
         return processingResult;
+    }
+
+    // TODO -- COME BACK
+    private String[] deriveSortedWordArrayResultFromTextBlock(String textBlock) {
+        List<String> words = extractWordListFromTextBlock(textBlock);
+        words = searchWordListForValidWords(words);
+        words = normalizeValidWordsToLowerCase(words);
+        Map<String, Long> wordFrequencyMap = countWordFrequency(words);
+        Set<String> validWordSet = deDupeListByConvertingToSet(words);
+        return convertSetToSortedArray(validWordSet);
     }
 
     private List<String> extractWordListFromTextBlock(String textBlock) {
         List<String> words = new ArrayList<>();
         Matcher matcher = wordExtractingPattern.matcher(textBlock);
-//System.out.println("-------- Original Words --------");
         while (matcher.find()) {
-//System.out.println(matcher.group());
             words.add(matcher.group());
         }
         return words;
@@ -59,16 +67,47 @@ public class RequiredLetterWordProcessor {
     private List<String> searchWordListForValidWords(List<String> words) {
         List<String> validWords = words.stream()
                 .filter(w -> wordIsValid(w)).collect(Collectors.toList());
-//System.out.println("-------- Valid Words --------");
-//validWords.stream().forEach(System.out::println);
         return validWords;
+    }
+
+    private boolean wordIsValid(String word) {
+        String normalizedWord = word.toUpperCase();
+        Collection<Character> charCollection = convertWordToCharacterCollection(normalizedWord);
+        return characterCollectionIsValid(charCollection);
+    }
+
+    private Collection<Character> convertWordToCharacterCollection(String word) {
+        Character[] charObjectArray = word.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
+        return new LinkedList(Arrays.asList(charObjectArray));
+    }
+
+    private boolean characterCollectionIsValid(Collection<Character> charCollection) {
+        charCollection.removeIf(c -> REQUIRED_LETTER_SET.contains(c));
+        String word = convertCharCollectionBackToWordString(charCollection);
+        return wordDoesNotConsistOfOnlyRequiredLetters(word) &&
+                (onlyOneCharacterRemaining(word) || allRemainingCharactersAreTheSame(word));
+    }
+
+    private boolean wordDoesNotConsistOfOnlyRequiredLetters(String word) {
+        return !word.equals("");
+    }
+
+    private String convertCharCollectionBackToWordString(Collection<Character> charCollection) {
+        return charCollection.stream().map(String::valueOf).collect(Collectors.joining());
+    }
+
+    private boolean onlyOneCharacterRemaining(String word) {
+        return word.length() == 1;
+    }
+
+    private boolean allRemainingCharactersAreTheSame(String word) {
+        return word.chars().allMatch(c -> c == word.charAt(0));
     }
 
     private List<String> normalizeValidWordsToLowerCase(List<String> validWords) {
         return validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
     }
 
-    // TODO -- MOVE
     private Map<String, Long> countWordFrequency(List<String> validWords) {
         Map<String, Long> collect = validWords.stream().collect(groupingBy(Function.identity(), counting()));
         Map<String, Long> wordFrequencyMap = collect.entrySet()
@@ -82,53 +121,17 @@ public class RequiredLetterWordProcessor {
                         },
                         LinkedHashMap::new
                 ));
-//System.out.println("-------- Word Frequencies --------");
-//wordFrequencyMap.entrySet().stream().forEach(System.out::println);
         return wordFrequencyMap;
-    }
-
-    private boolean wordIsValid(String word) {
-        String normalizedWord = word.toUpperCase();
-        Collection<Character> charCollection = convertWordToCharacterCollection(normalizedWord);
-        return characterCollectionIsValid(charCollection);
-    }
-
-
-    private Collection<Character> convertWordToCharacterCollection(String word) {
-        Character[] charObjectArray = word.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
-        return new LinkedList(Arrays.asList(charObjectArray));
-    }
-
-    private boolean characterCollectionIsValid(Collection<Character> charCollection) {
-        charCollection.removeIf(c -> REQUIRED_LETTER_SET.contains(c));
-        String word = convertCharCollectionBackToWordString(charCollection);
-        return onlyOneCharacterRemaining(charCollection) || allRemainingCharactersAreTheSame(word);
-    }
-
-    private String convertCharCollectionBackToWordString(Collection<Character> charCollection) {
-        return charCollection.stream().map(String::valueOf).collect(Collectors.joining());
-    }
-
-    private boolean onlyOneCharacterRemaining(Collection<Character> charCollection) {
-        return charCollection.size() == 1;
-    }
-
-    private boolean allRemainingCharactersAreTheSame(String word) {
-        return word.chars().allMatch(c -> c == word.charAt(0));
     }
 
     private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
         Set<String> validWordSet = new HashSet(validWordList);
-//System.out.println("-------- De-duped Words --------");
-//validWordSet.stream().forEach(System.out::println);
         return validWordSet;
     }
 
     private String[] convertSetToSortedArray(Set<String> validWordSet) {
         String[] validWordArray = validWordSet.stream().toArray(String[]::new);
         Arrays.sort(validWordArray, Comparator.comparing(String::length));
-//System.out.println("-------- Sorted De-duped Words --------");
-//Arrays.stream(validWordArray).forEach(System.out::println);
         return validWordArray;
     }
 
