@@ -1,13 +1,19 @@
 package com.pwvconsultants.tacosspring.wordprocessor;
 
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -21,27 +27,57 @@ public class RequiredLetterWordProcessor {
     // TODO: The most common word and number of uses as an object.
     // e.g.   {word:”word”,numberOfUses:2}.
 
-    // TODO: this is not working properly -- appears to be returning everything
     public String[] processText(String textBlock) {
         List<String> words = new ArrayList<>();
         Matcher matcher = wordExtractingPattern.matcher(textBlock);
+System.out.println("-------- Original Words --------");
         while (matcher.find()) {
-            System.out.println(matcher.group());
+System.out.println(matcher.group());
             words.add(matcher.group());
         }
-        Set<String> validWords = words.stream().filter(w -> wordIsValid(w)).collect(Collectors.toSet());
-        return convertSetToSortedArray(validWords);
+
+        List<String> validWords = words.stream()
+                .filter(w -> wordIsValid(w)).collect(Collectors.toList());
+System.out.println("-------- Valid Words --------");
+validWords.stream().forEach(System.out::println);
+
+        List<String> normalizedValidWords = validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
+        Map<String, Long> wordFrequencyMap = countWordFrequency(normalizedValidWords);
+System.out.println("-------- Word Frequencies --------");
+wordFrequencyMap.entrySet().stream().forEach(System.out::println);
+
+        Set<String> validWordSet = deDupeListByConvertingToSet(normalizedValidWords);
+System.out.println("-------- De-duped Words --------");
+validWordSet.stream().forEach(System.out::println);
+
+        String[] sortedArray = convertSetToSortedArray(validWordSet);
+System.out.println("-------- Sorted De-duped Words --------");
+Arrays.stream(sortedArray).forEach(System.out::println);
+        return sortedArray;
+    }
+
+    // TODO -- MOVE
+    private Map<String, Long> countWordFrequency(List<String> validWords) {
+        Map<String, Long> collect = validWords.stream().collect(groupingBy(Function.identity(), counting()));
+        return collect.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (v1, v2) -> {
+                            throw new IllegalStateException();
+                        },
+                        LinkedHashMap::new
+                ));
     }
 
     private boolean wordIsValid(String word) {
-        String normalizedWord = normalizeWordToUpperCase(word);
+        String normalizedWord = word.toUpperCase();
         Collection<Character> charCollection = convertWordToCharacterCollection(normalizedWord);
         return characterCollectionIsValid(charCollection);
     }
 
-    private String normalizeWordToUpperCase(String word) {
-        return word.toUpperCase();
-    }
 
     private Collection<Character> convertWordToCharacterCollection(String word) {
         Character[] charObjectArray = word.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
@@ -66,36 +102,13 @@ public class RequiredLetterWordProcessor {
         return word.chars().allMatch(c -> c == word.charAt(0));
     }
 
+    private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
+        return new HashSet(validWordList);
+    }
+
     private String[] convertSetToSortedArray(Set<String> validWordSet) {
         String[] validWordArray = validWordSet.stream().toArray(String[]::new);
         Arrays.sort(validWordArray, Comparator.comparing(String::length));
         return validWordArray;
-//        Arrays.stream(validWordArray).forEach(System.out::println);
-    }
-
-    private void processWordOld(String word) {
-        String upperCase = word.toUpperCase();
-        Character[] charObjectArray = upperCase.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
-        Collection<Character> strCharLinkedList = new LinkedList(Arrays.asList(charObjectArray));
-        strCharLinkedList.removeIf(c -> REQUIRED_LETTER_SET.contains(c));
-        Set<String> validWordSet = new HashSet<>();
-        if (strCharLinkedList.size() == 1) {
-            System.out.println("STRING PASSES");
-            validWordSet.add(word);
-        }
-        else {
-            String string = strCharLinkedList.stream().map(String::valueOf).collect(Collectors.joining());
-            if (string.chars().allMatch(c -> c == string.charAt(0))) {
-                System.out.println("STRING PASSES");
-                validWordSet.add(word);
-            }
-            else
-                System.out.println("STRING FAILS");
-        }
-        strCharLinkedList.forEach(System.out::println);
-
-        String[] validWordArray = validWordSet.stream().toArray(String[]::new);
-        Arrays.sort(validWordArray, Comparator.comparing(String::length));
-        Arrays.stream(validWordArray).forEach(System.out::println);
     }
 }

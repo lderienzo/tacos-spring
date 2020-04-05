@@ -22,7 +22,7 @@ public class RequiredLetterWordProcessorTest {
     @Test
     public void testRequiredLetterWordProcessor() {
         String[] validWords = wordProcessor.processText(TXT_SAMPLE);
-        Arrays.stream(validWords).forEach(System.out::println);
+//        Arrays.stream(validWords).forEach(System.out::println);
     }
 
     @Test
