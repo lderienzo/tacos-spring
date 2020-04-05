@@ -3,6 +3,9 @@ package com.pwvconsultants.tacosspring.wordprocessor;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,7 +23,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import com.pwvconsultants.tacosspring.TacosSpringApplication;
+import com.pwvconsultants.tacosspring.model.Taco;
+import com.pwvconsultants.tacosspring.model.Tacos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,7 +40,9 @@ public class RequiredLetterWordProcessor {
 
     public ProcessingResult processText(String textBlock) {
         List<String> words = getListOfValidWords(textBlock);
-        return new ProcessingResult(getRemainingWordArray(words), getMostCommonWord(words));
+        ProcessingResult processingResult = new ProcessingResult(getRemainingWordArray(words), getMostCommonWord(words));
+        writeProcessingResultToFile(processingResult);
+        return processingResult;
     }
 
     private List<String> getListOfValidWords(String textBlock) {
@@ -144,6 +153,34 @@ public class RequiredLetterWordProcessor {
 
     private Map.Entry<String, Long> getVeryFirstWordEntryWhichHasMostOccurrences(Map<String, Long> wordFrequencyMap) {
         return wordFrequencyMap.entrySet().iterator().next();
+    }
+
+    private void writeProcessingResultToFile(ProcessingResult processingResult) {
+        File jarFilePath = getPathOfCurrentlyExecutingJar();
+        String outFilePath = constructOutFilePathFromJarFilePath(jarFilePath);
+        writeJsonResultToOutFile(processingResult, outFilePath);
+    }
+
+    private File getPathOfCurrentlyExecutingJar() {
+        File jarFile = null;
+        try {
+            jarFile = new File(TacosSpringApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+        } catch (URISyntaxException e) {
+            new RuntimeException(e);
+        }
+        return jarFile;
+    }
+
+    private String constructOutFilePathFromJarFilePath(File jarFilePath) {
+        return jarFilePath.getParent() + File.separator + "textSampleResults.json";
+    }
+
+    private void writeJsonResultToOutFile(ProcessingResult processingResult, String outFilePath) {
+        try {
+            new ObjectMapper().writeValue(new File(outFilePath), processingResult);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
