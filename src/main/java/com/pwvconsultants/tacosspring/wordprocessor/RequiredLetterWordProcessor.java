@@ -27,56 +27,39 @@ public class RequiredLetterWordProcessor {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
     private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(\\-\\w+'\\w)?");
 
-    public ProcessingResult processText(String textBlock) {
-        List<String> words = extractWordListFromTextBlock(textBlock);
-        List<String> validWords = searchWordListForValidWords(words);
-        List<String> normalizedValidWords = normalizeValidWordsToLowerCase(validWords);
-        Map<String, Long> wordFrequencyMap = countWordFrequency(normalizedValidWords);
-        Set<String> validWordSet = deDupeListByConvertingToSet(normalizedValidWords);
-        String[] sortedArray = convertSetToSortedArray(validWordSet);
 
-        ProcessingResult processingResult;
-        if (wordFrequencyMap.size() > 0) {
-            Map.Entry<String, Long> entry = wordFrequencyMap.entrySet().iterator().next();
-            processingResult = new ProcessingResult(new MostCommonWord(entry.getKey(), entry.getValue()), sortedArray);
-        }
-        else
-            processingResult = new ProcessingResult(new MostCommonWord("", 0), sortedArray);
-        return processingResult;
+    public ProcessingResult processText(String textBlock) {
+        List<String> words = getListOfValidWords(textBlock);
+        return new ProcessingResult(getRemainingWordArray(words), getMostCommonWord(words));
     }
 
-    // TODO -- COME BACK
-    private String[] deriveSortedWordArrayResultFromTextBlock(String textBlock) {
+    private List<String> getListOfValidWords(String textBlock) {
         List<String> words = extractWordListFromTextBlock(textBlock);
         words = searchWordListForValidWords(words);
-        words = normalizeValidWordsToLowerCase(words);
-        Map<String, Long> wordFrequencyMap = countWordFrequency(words);
-        Set<String> validWordSet = deDupeListByConvertingToSet(words);
-        return convertSetToSortedArray(validWordSet);
+        return normalizeValidWordsToLowerCase(words);
     }
 
     private List<String> extractWordListFromTextBlock(String textBlock) {
         List<String> words = new ArrayList<>();
         Matcher matcher = wordExtractingPattern.matcher(textBlock);
-        while (matcher.find()) {
+        while (matcher.find())
             words.add(matcher.group());
-        }
         return words;
     }
 
     private List<String> searchWordListForValidWords(List<String> words) {
-        List<String> validWords = words.stream()
-                .filter(w -> wordIsValid(w)).collect(Collectors.toList());
-        return validWords;
+        return words.stream()
+                .filter(w -> wordIsValid(w))
+                .collect(Collectors.toList());
     }
 
     private boolean wordIsValid(String word) {
         String normalizedWord = word.toUpperCase();
-        Collection<Character> charCollection = convertWordToCharacterCollection(normalizedWord);
+        Collection<Character> charCollection = convertStringToCharacterCollection(normalizedWord);
         return characterCollectionIsValid(charCollection);
     }
 
-    private Collection<Character> convertWordToCharacterCollection(String word) {
+    private Collection<Character> convertStringToCharacterCollection(String word) {
         Character[] charObjectArray = word.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
         return new LinkedList(Arrays.asList(charObjectArray));
     }
@@ -88,12 +71,12 @@ public class RequiredLetterWordProcessor {
                 (onlyOneCharacterRemaining(word) || allRemainingCharactersAreTheSame(word));
     }
 
-    private boolean wordDoesNotConsistOfOnlyRequiredLetters(String word) {
-        return !word.equals("");
-    }
-
     private String convertCharCollectionBackToWordString(Collection<Character> charCollection) {
         return charCollection.stream().map(String::valueOf).collect(Collectors.joining());
+    }
+
+    private boolean wordDoesNotConsistOfOnlyRequiredLetters(String word) {
+        return !word.equals("");
     }
 
     private boolean onlyOneCharacterRemaining(String word) {
@@ -108,20 +91,9 @@ public class RequiredLetterWordProcessor {
         return validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
     }
 
-    private Map<String, Long> countWordFrequency(List<String> validWords) {
-        Map<String, Long> collect = validWords.stream().collect(groupingBy(Function.identity(), counting()));
-        Map<String, Long> wordFrequencyMap = collect.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (v1, v2) -> {
-                            throw new IllegalStateException();
-                        },
-                        LinkedHashMap::new
-                ));
-        return wordFrequencyMap;
+    private String[] getRemainingWordArray(List<String> words) {
+        Set<String> validWordSet = deDupeListByConvertingToSet(words);
+        return convertSetToSortedArray(validWordSet);
     }
 
     private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
@@ -135,11 +107,48 @@ public class RequiredLetterWordProcessor {
         return validWordArray;
     }
 
+    private MostCommonWord getMostCommonWord(List<String> words) {
+        Map<String, Long> wordOccurrencesMap = countWordOccurrences(words);
+        wordOccurrencesMap = sortMapByWordOccurrenceEntryValue(wordOccurrencesMap);
+        if (wordOccurrencesMapHasEntries(wordOccurrencesMap)) {
+            Map.Entry<String, Long> entry = getVeryFirstWordEntryWhichHasMostOccurrences(wordOccurrencesMap);
+            return new MostCommonWord(entry.getKey(), entry.getValue());
+        }
+        else return new MostCommonWord("", 0);
+    }
+
+    private Map<String, Long> countWordOccurrences(List<String> words) {
+        return words.stream().collect(groupingBy(Function.identity(), counting()));
+    }
+
+    private Map<String, Long> sortMapByWordOccurrenceEntryValue(Map<String, Long> wordOccurrencesMap) {
+        return wordOccurrencesMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (v1, v2) -> {
+                            throw new IllegalStateException();
+                        },
+                        LinkedHashMap::new
+                ));
+    }
+
+    private boolean wordOccurrencesMapHasEntries(Map<String, Long> wordFrequencyMap) {
+        return wordFrequencyMap.size() > 0;
+    }
+
+    private Map.Entry<String, Long> getVeryFirstWordEntryWhichHasMostOccurrences(Map<String, Long> wordFrequencyMap) {
+        return wordFrequencyMap.entrySet().iterator().next();
+    }
+
+
     @Data
     @AllArgsConstructor
     public class ProcessingResult {
-        private MostCommonWord mostCommonWord;
         private String[] remainingWords;
+        private MostCommonWord mostCommonWord;
 
         public ProcessingResult() {}
     }

@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-import com.pwvconsultants.tacosspring.utils.FileReader;
+import com.pwvconsultants.utils.FileReader;
 import com.pwvconsultants.tacosspring.wordprocessor.RequiredLetterWordProcessor;
 
 public class RequiredLetterWordProcessorTest {
@@ -27,6 +27,9 @@ public class RequiredLetterWordProcessorTest {
         RequiredLetterWordProcessor.ProcessingResult processingResult =
                 wordProcessor.processText(TXT_SAMPLE);
         // then
+        assertThat(processingResult.getRemainingWords()).containsExactly(EXPECTED_RETURN_WORD_ARRAY);
+Arrays.stream(processingResult.getRemainingWords()).forEach(System.out::println);
+
         assertThat(processingResult.getMostCommonWord().getWord()).isEqualTo(EXPECTED_MOST_COMMON_WORD);
 System.out.print("Most Common Word: ");
 System.out.println(processingResult.getMostCommonWord().getWord());
@@ -34,9 +37,6 @@ System.out.println(processingResult.getMostCommonWord().getWord());
         assertThat(processingResult.getMostCommonWord().getNumberOfUses()).isEqualTo(EXPECTED_NUMBER_OF_USES);
 System.out.print("Number of Uses: ");
 System.out.println(processingResult.getMostCommonWord().getNumberOfUses());
-
-        assertThat(processingResult.getRemainingWords()).containsExactly(EXPECTED_RETURN_WORD_ARRAY);
-Arrays.stream(processingResult.getRemainingWords()).forEach(System.out::println);
     }
 
     @Test
@@ -45,8 +45,8 @@ Arrays.stream(processingResult.getRemainingWords()).forEach(System.out::println)
         RequiredLetterWordProcessor.ProcessingResult processingResult =
                 wordProcessor.processText("");
         // then
+        assertThat(processingResult.getRemainingWords()).containsExactly(new String[]{});
         assertThat(processingResult.getMostCommonWord().getWord()).isEqualTo("");
         assertThat(processingResult.getMostCommonWord().getNumberOfUses()).isEqualTo(0);
-        assertThat(processingResult.getRemainingWords()).containsExactly(new String[]{});
     }
 }
