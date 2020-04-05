@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 public class RequiredLetterWordProcessor {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
     private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(\\-\\w+'\\w)?");
@@ -27,39 +30,48 @@ public class RequiredLetterWordProcessor {
     // TODO: The most common word and number of uses as an object.
     // e.g.   {word:”word”,numberOfUses:2}.
 
-    public String[] processText(String textBlock) {
+    public ProcessingResult processText(String textBlock) {
+        List<String> words = extractWordListFromTextBlock(textBlock);
+        List<String> validWords = searchWordListForValidWords(words);
+        List<String> normalizedValidWords = normalizeValidWordsToLowerCase(validWords);
+        Map<String, Long> wordFrequencyMap = countWordFrequency(normalizedValidWords);
+        Set<String> validWordSet = deDupeListByConvertingToSet(normalizedValidWords);
+        String[] sortedArray = convertSetToSortedArray(validWordSet);
+
+        Map.Entry<String, Long> entry = wordFrequencyMap.entrySet().iterator().next();
+        ProcessingResult processingResult =
+            new ProcessingResult(
+                new MostCommonWord(entry.getKey(), entry.getValue()), sortedArray);
+        return processingResult;
+    }
+
+    private List<String> extractWordListFromTextBlock(String textBlock) {
         List<String> words = new ArrayList<>();
         Matcher matcher = wordExtractingPattern.matcher(textBlock);
-System.out.println("-------- Original Words --------");
+//System.out.println("-------- Original Words --------");
         while (matcher.find()) {
-System.out.println(matcher.group());
+//System.out.println(matcher.group());
             words.add(matcher.group());
         }
+        return words;
+    }
 
+    private List<String> searchWordListForValidWords(List<String> words) {
         List<String> validWords = words.stream()
                 .filter(w -> wordIsValid(w)).collect(Collectors.toList());
-System.out.println("-------- Valid Words --------");
-validWords.stream().forEach(System.out::println);
+//System.out.println("-------- Valid Words --------");
+//validWords.stream().forEach(System.out::println);
+        return validWords;
+    }
 
-        List<String> normalizedValidWords = validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
-        Map<String, Long> wordFrequencyMap = countWordFrequency(normalizedValidWords);
-System.out.println("-------- Word Frequencies --------");
-wordFrequencyMap.entrySet().stream().forEach(System.out::println);
-
-        Set<String> validWordSet = deDupeListByConvertingToSet(normalizedValidWords);
-System.out.println("-------- De-duped Words --------");
-validWordSet.stream().forEach(System.out::println);
-
-        String[] sortedArray = convertSetToSortedArray(validWordSet);
-System.out.println("-------- Sorted De-duped Words --------");
-Arrays.stream(sortedArray).forEach(System.out::println);
-        return sortedArray;
+    private List<String> normalizeValidWordsToLowerCase(List<String> validWords) {
+        return validWords.stream().map(w -> w.toLowerCase()).collect(Collectors.toList());
     }
 
     // TODO -- MOVE
     private Map<String, Long> countWordFrequency(List<String> validWords) {
         Map<String, Long> collect = validWords.stream().collect(groupingBy(Function.identity(), counting()));
-        return collect.entrySet()
+        Map<String, Long> wordFrequencyMap = collect.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .collect(Collectors.toMap(
@@ -70,6 +82,9 @@ Arrays.stream(sortedArray).forEach(System.out::println);
                         },
                         LinkedHashMap::new
                 ));
+//System.out.println("-------- Word Frequencies --------");
+//wordFrequencyMap.entrySet().stream().forEach(System.out::println);
+        return wordFrequencyMap;
     }
 
     private boolean wordIsValid(String word) {
@@ -103,12 +118,35 @@ Arrays.stream(sortedArray).forEach(System.out::println);
     }
 
     private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
-        return new HashSet(validWordList);
+        Set<String> validWordSet = new HashSet(validWordList);
+//System.out.println("-------- De-duped Words --------");
+//validWordSet.stream().forEach(System.out::println);
+        return validWordSet;
     }
 
     private String[] convertSetToSortedArray(Set<String> validWordSet) {
         String[] validWordArray = validWordSet.stream().toArray(String[]::new);
         Arrays.sort(validWordArray, Comparator.comparing(String::length));
+//System.out.println("-------- Sorted De-duped Words --------");
+//Arrays.stream(validWordArray).forEach(System.out::println);
         return validWordArray;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public class ProcessingResult {
+        private MostCommonWord mostCommonWord;
+        private String[] remainingWords;
+
+        public ProcessingResult() {}
+    }
+
+    @Data
+    @AllArgsConstructor
+    public class MostCommonWord {
+        private String word;
+        private long numberOfUses;
+
+        public MostCommonWord() {}
     }
 }

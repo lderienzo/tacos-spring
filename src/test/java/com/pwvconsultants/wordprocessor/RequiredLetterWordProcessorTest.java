@@ -21,8 +21,13 @@ public class RequiredLetterWordProcessorTest {
 
     @Test
     public void testRequiredLetterWordProcessor() {
-        String[] validWords = wordProcessor.processText(TXT_SAMPLE);
-//        Arrays.stream(validWords).forEach(System.out::println);
+        RequiredLetterWordProcessor.ProcessingResult processingResult =
+                wordProcessor.processText(TXT_SAMPLE);
+        System.out.print("Most Common Word: ");
+        System.out.println(processingResult.getMostCommonWord().getWord());
+        System.out.print("Number of Uses: ");
+        System.out.println(processingResult.getMostCommonWord().getNumberOfUses());
+        Arrays.stream(processingResult.getRemainingWords()).forEach(System.out::println);
     }
 
     @Test
