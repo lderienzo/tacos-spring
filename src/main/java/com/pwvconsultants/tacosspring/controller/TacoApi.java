@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,14 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pwvconsultants.tacosspring.model.Taco;
 import com.pwvconsultants.tacosspring.service.TacoService;
+import com.pwvconsultants.tacosspring.wordprocessor.RequiredLetterWordProcessor;
 
-//TODO: add endpoint for RequiredLetterWordProcessor
 @RestController
 @RequestMapping(value = "/api")
 public class TacoApi {
 
     @Autowired
     TacoService tacoService;
+
+    @Autowired
+    RequiredLetterWordProcessor wordProcessor;
 
     @GetMapping(value = "/tacos", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getTacos() {
@@ -46,5 +50,10 @@ public class TacoApi {
     public String deleteTaco(@PathVariable String name) {
         String result = tacoService.removeTaco(name);
         return result;
+    }
+
+    @PostMapping(value = "/tacos/processtext")
+    public RequiredLetterWordProcessor.ProcessingResult processTextBlock(@RequestBody String textBlock) {
+        return wordProcessor.processText(textBlock);
     }
 }

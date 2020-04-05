@@ -18,11 +18,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.google.common.collect.ImmutableSet;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Component
 public class RequiredLetterWordProcessor {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
     private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(\\-\\w+'\\w)?");
