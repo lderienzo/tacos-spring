@@ -1,18 +1,14 @@
 package com.pwvconsultants.tacosspring.wordprocessor;
 
+import static com.google.common.collect.Lists.newLinkedList;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,16 +21,17 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
-import com.pwvconsultants.tacosspring.TacosSpringApplication;
+import com.google.common.collect.Sets;
+import com.pwvconsultants.tacosspring.data.FileHandler;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Component
-public class RequiredLetterWordProcessor {
+public class RequiredLetterProcessor {
     private static final Set<Character> REQUIRED_LETTER_SET = ImmutableSet.of('A','E','I','L','N','O','R','S','T','U');
-    private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(\\-\\w+'\\w)?");
-
+    private static final Pattern wordExtractingPattern = Pattern.compile("\\w+[']?\\w?(-\\w+'\\w)?");
+    private static final FileHandler FILE_HANDLER = new FileHandler();
 
     public ProcessingResult processText(String textBlock) {
         List<String> words = getListOfValidWords(textBlock);
@@ -65,24 +62,24 @@ public class RequiredLetterWordProcessor {
 
     private boolean wordIsValid(String word) {
         String normalizedWord = word.toUpperCase();
-        Collection<Character> charCollection = convertStringToCharacterCollection(normalizedWord);
-        return characterCollectionIsValid(charCollection);
+        List<Character> charCollection = convertStringToCharacterList(normalizedWord);
+        return characterListIsValid(charCollection);
     }
 
-    private Collection<Character> convertStringToCharacterCollection(String word) {
+    private List<Character> convertStringToCharacterList(String word) {
         Character[] charObjectArray = word.chars().mapToObj(c -> (char)c).toArray(Character[]::new);
-        return new LinkedList(Arrays.asList(charObjectArray));
+        return newLinkedList(Arrays.asList(charObjectArray));
     }
 
-    private boolean characterCollectionIsValid(Collection<Character> charCollection) {
-        charCollection.removeIf(REQUIRED_LETTER_SET::contains);
-        String word = convertCharCollectionBackToWordString(charCollection);
+    private boolean characterListIsValid(List<Character> characterList) {
+        characterList.removeIf(REQUIRED_LETTER_SET::contains);
+        String word = convertCharListBackToWordString(characterList);
         return wordDoesNotConsistOfOnlyRequiredLetters(word) &&
                 (onlyOneCharacterRemaining(word) || allRemainingCharactersAreTheSame(word));
     }
 
-    private String convertCharCollectionBackToWordString(Collection<Character> charCollection) {
-        return charCollection.stream().map(String::valueOf).collect(Collectors.joining());
+    private String convertCharListBackToWordString(List<Character> characterList) {
+        return characterList.stream().map(String::valueOf).collect(Collectors.joining());
     }
 
     private boolean wordDoesNotConsistOfOnlyRequiredLetters(String word) {
@@ -107,7 +104,7 @@ public class RequiredLetterWordProcessor {
     }
 
     private Set<String> deDupeListByConvertingToSet(List<String> validWordList) {
-        return new HashSet(validWordList);
+        return Sets.newHashSet(validWordList);
     }
 
     private String[] convertSetToSortedArray(Set<String> validWordSet) {
@@ -153,28 +150,13 @@ public class RequiredLetterWordProcessor {
     }
 
     private void writeProcessingResultToFile(ProcessingResult processingResult) {
-        File jarFilePath = getPathOfCurrentlyExecutingJar();
-        String outFilePath = constructOutFilePathFromJarFilePath(jarFilePath);
-        writeJsonResultToOutFile(processingResult, outFilePath);
+        String resultObjectJsonString = writeJsonResultObjectToString(processingResult);
+        FILE_HANDLER.writeToFileInJarParentDirectory("textSampleResults.json", resultObjectJsonString);
     }
 
-    private File getPathOfCurrentlyExecutingJar() {
-        File jarFile = null;
+    private String writeJsonResultObjectToString(ProcessingResult processingResult) {
         try {
-            jarFile = new File(TacosSpringApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-        } catch (URISyntaxException e) {
-            new RuntimeException(e);
-        }
-        return jarFile;
-    }
-
-    private String constructOutFilePathFromJarFilePath(File jarFilePath) {
-        return jarFilePath.getParent() + File.separator + "textSampleResults.json";
-    }
-
-    private void writeJsonResultToOutFile(ProcessingResult processingResult, String outFilePath) {
-        try {
-            new ObjectMapper().writeValue(new File(outFilePath), processingResult);
+            return new ObjectMapper().writeValueAsString(processingResult);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -192,7 +174,7 @@ public class RequiredLetterWordProcessor {
 
     @Data
     @AllArgsConstructor
-    public class MostCommonWord {
+    public static class MostCommonWord {
         private String word;
         private long numberOfUses;
 

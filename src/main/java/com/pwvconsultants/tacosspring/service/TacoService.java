@@ -9,22 +9,21 @@ import com.pwvconsultants.tacosspring.model.Taco;
 @Component
 public class TacoService {
 
-    public static final String tacosJsonPath = "src/main/resources/db.json";
-    private final TacoFileDataSource tacoFileDataSource = new TacoFileDataSource(tacosJsonPath);
+    private static final TacoFileDataSource TACO_FILE_DATA_SOURCE = new TacoFileDataSource();
 
     public String getTacos() {
-        return tacoFileDataSource.getTacosJsonString();
+        return TACO_FILE_DATA_SOURCE.getTacosJsonString();
     }
 
     public String getTaco(String name) {
-        return tacoFileDataSource.getTaco(name);
+        return TACO_FILE_DATA_SOURCE.getTaco(name);
     }
 
     public String updateTaco(Taco taco) {
-        return tacoFileDataSource.updateTaco(taco);
+        return TACO_FILE_DATA_SOURCE.updateTaco(taco);
     }
 
     public String removeTaco(String name) {
-        return tacoFileDataSource.removeTaco(name);
+        return TACO_FILE_DATA_SOURCE.removeTaco(name);
     }
 }

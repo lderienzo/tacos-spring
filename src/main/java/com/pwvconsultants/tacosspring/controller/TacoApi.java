@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pwvconsultants.tacosspring.model.Taco;
 import com.pwvconsultants.tacosspring.service.TacoService;
-import com.pwvconsultants.tacosspring.wordprocessor.RequiredLetterWordProcessor;
+import com.pwvconsultants.tacosspring.wordprocessor.RequiredLetterProcessor;
 
 @RestController
 @RequestMapping(value = "/api")
@@ -24,7 +24,7 @@ public class TacoApi {
     TacoService tacoService;
 
     @Autowired
-    RequiredLetterWordProcessor wordProcessor;
+    RequiredLetterProcessor wordProcessor;
 
     @GetMapping(value = "/tacos", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getTacos() {
@@ -47,7 +47,7 @@ public class TacoApi {
     }
 
     @PostMapping(value = "/tacos/processtext")
-    public RequiredLetterWordProcessor.ProcessingResult processTextBlock(@RequestBody String textBlock) {
+    public RequiredLetterProcessor.ProcessingResult processTextBlock(@RequestBody String textBlock) {
         return wordProcessor.processText(textBlock);
     }
 }

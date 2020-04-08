@@ -1,10 +1,6 @@
 package com.pwvconsultants.tacosspring.data;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,19 +17,20 @@ public final class TacoFileDataSource {
 
     public static final String DONE = "done";
     public static final String NOT_FOUND = "not found";
-    private final String filePath;
+    public static final String TACOS_JSON_FILE = "db.json";
+    private static final FileHandler FILE_HANDLER = new FileHandler();
+    private final ObjectMapper mapper;
     private String tacosJsonString;
     private Taco[] tacos;
-    private final ObjectMapper mapper;
 
-    public TacoFileDataSource(String filePath) {
-        this.filePath = filePath;
+
+    public TacoFileDataSource() {
         mapper = new ObjectMapper();
         this.tacos = readTacoDataFromFile(mapper);
     }
 
     private Taco[] readTacoDataFromFile(ObjectMapper mapper) {
-        tacosJsonString = readFileContents();
+        tacosJsonString = readTacosJsonStringFromFile();
         try {
             return mapper.readValue(tacosJsonString, Taco[].class);
         } catch (JsonProcessingException e) {
@@ -41,29 +38,19 @@ public final class TacoFileDataSource {
         }
     }
 
-    private String readFileContents() {
-        String absoluteFilePath = new File(filePath).getAbsolutePath();
-        return getTacosJsonStringFromAbsolutePath(absoluteFilePath);
+    private String readTacosJsonStringFromFile() {
+        String content = FILE_HANDLER.readFileFromDirectoryContainingThisJar(TACOS_JSON_FILE);
+        return parseOutTacosJsonArrayPortion(content);
     }
 
-    private String getTacosJsonStringFromAbsolutePath(String absoluteFilePath) {
-        StringBuilder contentBuilder = new StringBuilder();
-        try (Stream<String> stream = Files.lines(Paths.get(absoluteFilePath), StandardCharsets.UTF_8)) {
-            stream.forEach(contentBuilder::append);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return parseOutTacosJsonArray(contentBuilder);
-    }
-
-    private String parseOutTacosJsonArray(StringBuilder contentBuilder) {
-        int beginArrayIndex = contentBuilder.indexOf("[");
-        int endArrayIndex = contentBuilder.indexOf("]") + 1;
-        return contentBuilder.subSequence(beginArrayIndex, endArrayIndex).toString();
+    private String parseOutTacosJsonArrayPortion(String content) {
+        int beginArrayIndex = content.indexOf("[");
+        int endArrayIndex = content.indexOf("]") + 1;
+        return content.subSequence(beginArrayIndex, endArrayIndex).toString();
     }
 
     public String getTacosJsonString() {
-        tacosJsonString = readFileContents();
+        tacosJsonString = readTacosJsonStringFromFile();
         return tacosJsonString;
     }
 
@@ -114,10 +101,14 @@ public final class TacoFileDataSource {
     }
 
     private void writeTacoDataToFile(Taco[] tacosArray) {
-        Tacos tacos = new Tacos(tacosArray);
+        String tacosJson = convertTacosObjectToJsonString(new Tacos(tacosArray));
+        FILE_HANDLER.writeToFileInJarParentDirectory(TACOS_JSON_FILE, tacosJson);
+    }
+
+    private String convertTacosObjectToJsonString(Tacos tacos) {
         try {
-            mapper.writeValue(new File(filePath), tacos);
-        } catch (IOException e) {
+            return mapper.writeValueAsString(tacos);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
