@@ -36,17 +36,17 @@ public class TacoApi {
         return tacoService.getTaco(name);
     }
 
-    @PutMapping(value = "/taco/{name}")
+    @PutMapping(value = "/taco/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public String updateTaco(@RequestBody Taco changedTaco) {
         return tacoService.updateTaco(changedTaco);
     }
 
-    @DeleteMapping(value = "/taco/{name}")
+    @DeleteMapping(value = "/taco/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public String deleteTaco(@PathVariable String name) {
         return tacoService.removeTaco(name);
     }
 
-    @PostMapping(value = "/tacos/processtext")
+    @PostMapping(value = "/tacos/processtext", produces = MediaType.APPLICATION_JSON_VALUE)
     public RequiredLetterProcessor.ProcessingResult processTextBlock(@RequestBody String textBlock) {
         return wordProcessor.processText(textBlock);
     }
