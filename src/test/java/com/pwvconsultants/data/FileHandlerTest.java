@@ -1,6 +1,6 @@
 package com.pwvconsultants.data;
 
-import static com.pwvconsultants.tacosspring.data.TacoFileDataSource.TACOS_JSON_FILE;
+import static com.pwvconsultants.tacosspring.service.TacoService.TACOS_JSON_FILE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
